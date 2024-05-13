@@ -109,23 +109,16 @@ def main():
     """
     Read data from the Query and publish it to Kafka
     """
-    # Create a pre-configured Producer object.
-    # Producer is already setup to use Quix brokers.
-    # It will also ensure that the topics exist before producing to them if
-    # Application.Quix is initialized with "auto_create_topics=True".
     with app.get_producer() as producer:
         for res in get_data():
-            # Parse the JSON string into a Python object
             records = json.loads(res)
             for index, obj in enumerate(records):
-                # Generate a unique message_key for these rows
                 message_key = f"INFLUX2_DATA_{str(random.randint(1, 100)).zfill(3)}_{index}"
-                # Publish the data to the topic
                 logger.info(f"Produced message with key:{message_key}, value:{obj}")
                 producer.produce(
                     topic=topic.name,
-                    key=message_key,
-                    value=obj,
+                    key=message_key.encode('utf-8'),  # encode the key as bytes
+                    value=json.dumps(obj).encode('utf-8'),  # serialize and encode the value as bytes
                 )
 
 if __name__ == "__main__":
